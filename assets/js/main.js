@@ -461,15 +461,38 @@
       $submit.prop("disabled", true).html('<i class="bi bi-hourglass-split"></i> Enviando...');
       $budgetFeedback.prop("hidden", true).removeClass("is-success is-error");
 
+      // Envio por e-mail via FormSubmit (formsubmit.co), sem servidor próprio.
+      // Na 1ª vez, o FormSubmit manda um e-mail de ativação para o endereço abaixo.
+      var mailData = {
+        _subject: "Novo orçamento pelo site - " + payload.nome,
+        _template: "table",
+        _captcha: "false",
+        _replyto: payload.email,
+        _autoresponse: "Olá, " + payload.nome + "! Recebemos sua solicitação de orçamento (" +
+          payload.categoria + ", retirada em " + payload.data_retirada + " às " + payload.hora_retirada +
+          "). Em breve entraremos em contato. Porto Mais Turismo & Locadora.",
+        Categoria: payload.categoria,
+        Local: payload.local,
+        "Data de retirada": payload.data_retirada,
+        "Horário de retirada": payload.hora_retirada,
+        "Data de devolução": payload.data_devolucao,
+        "Horário de devolução": payload.hora_devolucao,
+        Nome: payload.nome,
+        CPF: payload.cpf,
+        email: payload.email,
+        WhatsApp: payload.whatsapp
+      };
+
       $.ajax({
-        url: "api/enviar-orcamento.php",
+        url: "https://formsubmit.co/ajax/portolocadora@gmail.com",
         method: "POST",
         contentType: "application/json; charset=utf-8",
-        data: JSON.stringify(payload),
+        headers: { Accept: "application/json" },
+        data: JSON.stringify(mailData),
         dataType: "json"
       })
         .done(function (res) {
-          if (res && res.ok) {
+          if (res && (res.success === true || res.success === "true")) {
             $budgetForm[0].reset();
             $("#budgetLocal").val("Porto Seguro - BA");
             $budgetFeedback.prop("hidden", true).removeClass("is-success is-error").text("");
@@ -481,7 +504,7 @@
             showSiteToast(
               "success",
               "Orçamento enviado!",
-              res.message || "Solicitação enviada com sucesso. Verifique também seu e-mail."
+              "Solicitação enviada com sucesso. Verifique também seu e-mail."
             );
             return;
           }
